@@ -5,10 +5,12 @@ import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.put;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Random;
 import java.util.Scanner;
 
 import com.amihaiemil.eoyaml.Yaml;
@@ -24,7 +26,16 @@ import jhunions.isaiahgao.server.model.UserHandler;
 public class Main {
 
 	private Main() {
-		File file = new File("auth");
+		String auth = checkAuthFile("auth");
+		String admin = checkAuthFile("admin");
+		
+		this.handler = new RoomHandler();
+		this.users = new UserHandler();
+		this.auth = new Authenticator(auth, admin);
+	}
+	
+	private static String checkAuthFile(String filename) {
+		File file = new File(filename);
 		String auth = null;
 		if (file.exists()) {
 			try {
@@ -39,13 +50,22 @@ public class Main {
 				System.exit(1);
 			}
 		} else {
-			System.err.println("Auth file does not exist!");
-			System.exit(1);
+			System.err.println("Auth file does not exist! Generating...");
+			try {
+				file.createNewFile();
+				FileWriter writer = new FileWriter(file);
+				Random rand = new Random();
+				byte[] buf = new byte[32];
+				rand.nextBytes(buf);
+				auth = new String(buf);
+				writer.write(auth);
+				writer.close();
+			} catch (Exception e) {
+				System.err.println("Failed to generate auth file.");
+				System.exit(1);
+			}
 		}
-		
-		this.handler = new RoomHandler();
-		this.users = new UserHandler();
-		this.auth = new Authenticator(auth);
+		return auth;
 	}
 
 	public static YamlMapping config;
@@ -95,6 +115,7 @@ public class Main {
                     put(Controller::sendCommand);
                     get(Controller::getStatus);
                 });
+                get(Controller::getStatuses);
             });
             path("users", () -> {
             	put(Controller::addUser);

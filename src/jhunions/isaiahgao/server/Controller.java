@@ -4,6 +4,7 @@ import java.util.Map;
 
 import io.javalin.Context;
 import jhunions.isaiahgao.common.Exceptions;
+import jhunions.isaiahgao.common.Exceptions.AuthenticationFailedException;
 import jhunions.isaiahgao.common.Exceptions.NoSuchRoomException;
 import jhunions.isaiahgao.common.PracticeRoom;
 import jhunions.isaiahgao.common.User;
@@ -21,8 +22,13 @@ public class Controller {
 	 * 
 	 * @param ctx The context.
 	 * @throws NoSuchRoomException If the request is for a room that doesn't exist.
+	 * @throws AuthenticationFailedException If auth is invalid.
 	 */
-    public static void sendCommand(Context ctx) throws NoSuchRoomException {
+    public static void sendCommand(Context ctx) throws NoSuchRoomException, AuthenticationFailedException {
+    	if (Main.getInstance().getAuthenticator().getAuthLevel(ctx) < 1) {
+    		throw new Exceptions.AuthenticationFailedException();
+    	}
+    	
     	PracticeRoom room = getRoomObject(ctx);
     	if (room == null) {
     		throw new Exceptions.NoSuchRoomException();
@@ -107,22 +113,34 @@ public class Controller {
      * Gets status of all rooms at once.
      * Result 200:
      * rooms:
-     *   109: -1
-     *   110: 12
+     *   109:
+     *     user:
+     *     remaining: -1
+     *   110:
+     *     user: bob
+     *     remaining: 12
      *   ...
-     *   119: 70
-     * @param ctx The context.
+     *   119:
+     *     user: joe
+     *     remaining: 70
+     * @param ctx The context. Showing users requires auth level 2.
      */
     public static void getStatuses(Context ctx) {
+    	boolean op = Main.getInstance().getAuthenticator().getAuthLevel(ctx) > 1;
+    	
     	String json = "{";
     	for (Map.Entry<String, PracticeRoom> entry : Main.getInstance().getRoomHandler()) {
-    		json += "\"" + entry.getKey() + "\":" + entry.getValue().getMinutesUntilAvailable() + ",";
+    		json += "\"" + entry.getKey() + "\":{"
+    				+ "\"remaining\":" + entry.getValue().getMinutesUntilAvailable()
+    				+ (op ? ",\"user\":\"" + entry.getValue().getOccupant().getName().toString() + "\"" : "")
+    				+ "},";
     	}
     	
     	if (json.endsWith(","))
     		json = json.substring(0, json.length() - 1);
     	json += "}";
     	
+    	ctx.header("Content-Type", "text/json");
     	ctx.result("{\"rooms\":" + json + "}");
     	ctx.status(200);
     }
@@ -136,6 +154,10 @@ public class Controller {
      * @throws Exception If something goes wrong.
      */
     public static User getUser(Context ctx) throws Exception {
+    	if (Main.getInstance().getAuthenticator().getAuthLevel(ctx) < 1) {
+    		throw new Exceptions.AuthenticationFailedException();
+    	}
+    	
     	User user = ctx.pathParam("user", User.class).getValue();
     	return user;
     }
@@ -149,6 +171,10 @@ public class Controller {
      * @throws Exception If something goes wrong.
      */
     public static void addUser(Context ctx) throws Exception {
+    	if (Main.getInstance().getAuthenticator().getAuthLevel(ctx) < 1) {
+    		throw new Exceptions.AuthenticationFailedException();
+    	}
+    	
     	User user = getUser(ctx);
     	if (user == null) {
     		ctx.status(400);
