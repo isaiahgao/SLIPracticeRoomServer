@@ -1,6 +1,11 @@
 package jhunions.isaiahgao.server.model;
 
+import java.io.IOException;
+
+import com.fasterxml.jackson.databind.JsonNode;
+
 import io.javalin.Context;
+import jhunions.isaiahgao.server.Main;
 
 public class Authenticator {
 	
@@ -23,7 +28,14 @@ public class Authenticator {
 	}
 	
 	public int getAuthLevel(Context ctx) {
-		return this.getAuthLevel(ctx.pathParam("key"));
+        JsonNode body;
+        try {
+            body = Main.getJson().readTree(ctx.body());
+        } catch (IOException e) {
+        	e.printStackTrace();
+        	return 0;
+        }
+        return getAuthLevel(body.has("key") ? body.get("key").asText() : null);
 	}
 
 }

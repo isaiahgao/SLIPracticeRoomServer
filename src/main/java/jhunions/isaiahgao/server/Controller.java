@@ -1,12 +1,17 @@
 package jhunions.isaiahgao.server;
 
+import java.io.IOException;
 import java.util.Map;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import io.javalin.Context;
 import jhunions.isaiahgao.common.Exceptions;
 import jhunions.isaiahgao.common.Exceptions.AuthenticationFailedException;
 import jhunions.isaiahgao.common.Exceptions.NoSuchRoomException;
 import jhunions.isaiahgao.common.PracticeRoom;
+import jhunions.isaiahgao.common.ScanResult;
 import jhunions.isaiahgao.common.User;
 
 public class Controller {
@@ -35,13 +40,21 @@ public class Controller {
     	}
     	
     	try {
-	    	User user = getUser(ctx);
+	    	ctx.header("Content-Type", "text/json");
+    		
+    		User user = getUser(ctx);
+	    	if (user == null) {
+	    		ctx.result(ScanResult.NO_SUCH_USER.toJson());
+	    		ctx.status(200);
+	    		return;
+	    	}
 	    	
 	    	if (room.isOccupied()) {
 	    		if (room.getOccupant().getHopkinsID().equals(user.getHopkinsID())) {
 	    			// check back in the room
 	    			// TODO
-	    			ctx.status(204);
+		    		ctx.result(ScanResult.CHECKED_IN.toJson());
+		    		ctx.status(200);
 	    			return;
 	    		}
 	    		
@@ -52,7 +65,8 @@ public class Controller {
 	    	// check out the room
 	    	// TOOD
 	    	room.setOccupant(user);
-	    	ctx.status(204);
+    		ctx.result(ScanResult.CHECKED_OUT.toJson());
+    		ctx.status(200);
     	} catch (Exception e) {
     		ctx.status(404);
     	}
@@ -84,8 +98,6 @@ public class Controller {
 //        } catch (CoordinateOutOfBoundsException e) {
 //            throw new GameplayException();
 //        }
-
-        ctx.status(204);
     }
     
     /**
@@ -121,7 +133,7 @@ public class Controller {
      *     remaining: 12
      *   ...
      *   119:
-     *     user: joe
+     *     user: {json}
      *     remaining: 70
      * @param ctx The context. Showing users requires auth level 2.
      */
@@ -130,9 +142,10 @@ public class Controller {
     	
     	String json = "{";
     	for (Map.Entry<String, PracticeRoom> entry : Main.getInstance().getRoomHandler()) {
+    		User occupant = entry.getValue().getOccupant();
     		json += "\"" + entry.getKey() + "\":{"
     				+ "\"remaining\":" + entry.getValue().getMinutesUntilAvailable()
-    				+ (op ? ",\"user\":\"" + entry.getValue().getOccupant().getName().toString() + "\"" : "")
+    				+ (op ? ",\"user\":\"" + (occupant == null ? "\"null\"" : occupant.toString()) + "\"" : "")
     				+ "},";
     	}
     	
@@ -158,8 +171,28 @@ public class Controller {
     		throw new Exceptions.AuthenticationFailedException();
     	}
     	
-    	User user = ctx.pathParam("user", User.class).getValue();
-    	return user;
+    	JsonNode body;
+        try {
+            body = Main.getJson().readTree(ctx.body());
+        } catch (IOException e) {
+        	e.printStackTrace();
+        	throw new Exceptions.NoSuchUserException();
+        }
+        
+        try {
+        	if (body.has("user"))
+        		return new User(body.get("user").asText());
+        
+        	if (body.has("cardnumber")) {
+        		String num = body.get("cardnumber").asText();
+        		return Main.getInstance().getUserHandler().getById(num);
+        	}
+        	
+        	throw new IllegalStateException();
+        } catch (Exception e) {
+        	e.printStackTrace();
+        	throw new Exceptions.NoSuchUserException();
+        }
     }
     
     /**

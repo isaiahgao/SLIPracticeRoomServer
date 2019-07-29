@@ -3,6 +3,7 @@ package jhunions.isaiahgao.server;
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.put;
+import static io.javalin.apibuilder.ApiBuilder.post;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -24,7 +25,7 @@ import jhunions.isaiahgao.server.model.RoomHandler;
 import jhunions.isaiahgao.server.model.UserHandler;
 
 public class Main {
-
+	
 	private Main() {
 		String auth = checkAuthFile("auth");
 		String admin = checkAuthFile("admin");
@@ -93,6 +94,7 @@ public class Main {
     
 	public static void main(String[] args) {
 		instance = new Main();
+		int port = System.getenv("PORT") != null ? Integer.parseInt(System.getenv("PORT")) : 7000;
 		
 		// load config
 		try {
@@ -112,14 +114,14 @@ public class Main {
         .routes(() -> {
             path("rooms", () -> {
                 path(":roomid", () -> {
-                    put(Controller::sendCommand);
-                    get(Controller::getStatus);
+                    post(Controller::sendCommand);
+                    put(Controller::getStatus);
                 });
-                get(Controller::getStatuses);
+                put(Controller::getStatuses);
             });
             path("users", () -> {
-            	put(Controller::addUser);
-            	get(Controller::getUser);
+            	post(Controller::addUser);
+            	put(Controller::getUser);
             });
         })
 
@@ -132,10 +134,8 @@ public class Main {
 //        .enableStaticFiles("/public")
 //        .enableStaticFiles(System.getProperty("user.dir") + "/src/main/resources/public", Location.EXTERNAL)
 
-        .start(System.getenv("PORT") != null ? Integer.parseInt(System.getenv("PORT")) : 7000);
-        
-        // set up local database
-        
+        .start(port);
+        System.out.println("Starting on port " + port);
 	}
 	
     /**
