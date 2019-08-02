@@ -4,6 +4,7 @@ import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.put;
 import static io.javalin.apibuilder.ApiBuilder.post;
+import static io.javalin.apibuilder.ApiBuilder.delete;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -50,10 +51,13 @@ public class Main {
 				System.err.println("Auth file invalid!");
 				System.exit(1);
 			}
-		} else {
-			System.err.println("Auth file does not exist! Generating...");
+		}
+		
+		if (auth == null) {
+			System.err.println("Auth file does not exist or is invalid! Generating...");
 			try {
-				file.createNewFile();
+				if (!file.exists())
+					file.createNewFile();
 				FileWriter writer = new FileWriter(file);
 				Random rand = new Random();
 				byte[] buf = new byte[32];
@@ -108,6 +112,7 @@ public class Main {
 			System.exit(1);
 		}
 		instance.handler.load();
+		instance.users.load();
 		
 		//createNewDatabase("users");
         Javalin.create()
@@ -121,7 +126,12 @@ public class Main {
             });
             path("users", () -> {
             	post(Controller::addUser);
-            	put(Controller::getUser);
+            	path(":userid", () -> {
+            		delete(Controller::removeUser);
+            	});
+            	path(":userid", () -> {
+                	put(Controller::getUser);
+            	});
             });
         })
 

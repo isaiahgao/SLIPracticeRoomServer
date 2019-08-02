@@ -4,14 +4,14 @@ import java.io.IOException;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 
 import io.javalin.Context;
 import jhunions.isaiahgao.common.Exceptions;
 import jhunions.isaiahgao.common.Exceptions.AuthenticationFailedException;
 import jhunions.isaiahgao.common.Exceptions.NoSuchRoomException;
 import jhunions.isaiahgao.common.PracticeRoom;
-import jhunions.isaiahgao.common.ScanResult;
+import jhunions.isaiahgao.common.ScanResultPacket;
+import jhunions.isaiahgao.common.ScanResultPacket.ScanResult;
 import jhunions.isaiahgao.common.User;
 
 public class Controller {
@@ -42,9 +42,9 @@ public class Controller {
     	try {
 	    	ctx.header("Content-Type", "text/json");
     		
-    		User user = getUser(ctx);
+    		User user = getUserFromCtx(ctx);
 	    	if (user == null) {
-	    		ctx.result(ScanResult.NO_SUCH_USER.toJson());
+	    		ctx.result(new ScanResultPacket(ScanResult.NO_SUCH_USER, null).toString());
 	    		ctx.status(200);
 	    		return;
 	    	}
@@ -53,7 +53,8 @@ public class Controller {
 	    		if (room.getOccupant().getHopkinsID().equals(user.getHopkinsID())) {
 	    			// check back in the room
 	    			// TODO
-		    		ctx.result(ScanResult.CHECKED_IN.toJson());
+	    			room.setOccupant(null);
+		    		ctx.result(new ScanResultPacket(ScanResult.CHECKED_IN, room.getId()).toString());
 		    		ctx.status(200);
 	    			return;
 	    		}
@@ -65,7 +66,7 @@ public class Controller {
 	    	// check out the room
 	    	// TOOD
 	    	room.setOccupant(user);
-    		ctx.result(ScanResult.CHECKED_OUT.toJson());
+    		ctx.result(new ScanResultPacket(ScanResult.CHECKED_OUT, room.getId()).toString());
     		ctx.status(200);
     	} catch (Exception e) {
     		ctx.status(404);
@@ -158,6 +159,41 @@ public class Controller {
     	ctx.status(200);
     }
     
+    public static void getUser(Context ctx) throws Exception {
+    	if (Main.getInstance().getAuthenticator().getAuthLevel(ctx) < 1) {
+    		throw new Exceptions.AuthenticationFailedException();
+    	}
+    	
+        String id = ctx.pathParam("userid");
+        if (id == null)
+        	throw new Exceptions.InvalidSyntaxException();
+    	
+        User user = Main.getInstance().getUserHandler().getById(id);
+        if (user == null)
+        	throw new Exceptions.NoSuchUserException();
+        
+    	ctx.header("Content-Type", "text/json");
+    	ctx.result(user.toString());
+    	ctx.status(200);
+    }
+    
+    public static void removeUser(Context ctx) throws Exception {
+    	if (Main.getInstance().getAuthenticator().getAuthLevel(ctx) < 1) {
+    		throw new Exceptions.AuthenticationFailedException();
+    	}
+    	
+        String id = ctx.pathParam("userid");
+        if (id == null)
+        	throw new Exceptions.InvalidSyntaxException();
+    	
+        boolean successful = Main.getInstance().getUserHandler().unregister(id);
+        if (!successful)
+        	throw new Exceptions.NoSuchUserException();
+        
+    	ctx.status(200);
+    }
+    
+    
     /**
      * Gets user associated with a card number or email.
      * Body contains user card ID or email, and auth.
@@ -166,7 +202,7 @@ public class Controller {
      * @param ctx The context.
      * @throws Exception If something goes wrong.
      */
-    public static User getUser(Context ctx) throws Exception {
+    private static User getUserFromCtx(Context ctx) throws Exception {
     	if (Main.getInstance().getAuthenticator().getAuthLevel(ctx) < 1) {
     		throw new Exceptions.AuthenticationFailedException();
     	}
@@ -180,15 +216,18 @@ public class Controller {
         }
         
         try {
+        	// has user as node
         	if (body.has("user"))
         		return new User(body.get("user").asText());
         
+        	// has card number for some reason
         	if (body.has("cardnumber")) {
         		String num = body.get("cardnumber").asText();
         		return Main.getInstance().getUserHandler().getById(num);
         	}
         	
-        	throw new IllegalStateException();
+        	// thing is a user
+        	return new User(ctx.body());
         } catch (Exception e) {
         	e.printStackTrace();
         	throw new Exceptions.NoSuchUserException();
@@ -208,7 +247,7 @@ public class Controller {
     		throw new Exceptions.AuthenticationFailedException();
     	}
     	
-    	User user = getUser(ctx);
+    	User user = getUserFromCtx(ctx);
     	if (user == null) {
     		ctx.status(400);
     		return;

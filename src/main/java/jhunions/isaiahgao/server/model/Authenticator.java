@@ -17,6 +17,10 @@ public class Authenticator {
 	private final String auth, admin;
 	
 	public int getAuthLevel(String key) {
+		System.out.println("Keys:");
+		System.out.println("Recv: " + key);
+		System.out.println("Admn: " + this.admin);
+		System.out.println("Auth: " + this.auth);
 		if (this.admin.equals(key)) {
 			return 2;
 		}

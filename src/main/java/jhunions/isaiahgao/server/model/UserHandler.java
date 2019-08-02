@@ -16,10 +16,9 @@ public class UserHandler {
 	
 	public UserHandler() {
 		this.byHopkinsId = new HashMap<>();
-		this.load();
 	}
 	
-	private void load() {
+	public void load() {
 		try {
 			File file = new File("users");
 			if (!file.exists()) {
@@ -49,6 +48,10 @@ public class UserHandler {
 	
 	public @Nullable User getById(String id) {
 		return this.byHopkinsId.get(id);
+	}
+	
+	public boolean unregister(String id) {
+		return this.byHopkinsId.remove(id) != null;
 	}
 	
 	public void registerUser(User user) {
