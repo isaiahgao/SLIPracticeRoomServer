@@ -1,7 +1,9 @@
 package jhunions.isaiahgao.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Scanner;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -139,6 +141,7 @@ public class Controller {
      * @param ctx The context. Showing users requires auth level 2.
      */
     public static void getStatuses(Context ctx) {
+    	System.out.println("received get request");
     	boolean op = Main.getInstance().getAuthenticator().getAuthLevel(ctx) > 1;
     	
     	String json = "{";
@@ -155,6 +158,7 @@ public class Controller {
     	json += "}";
     	
     	ctx.header("Content-Type", "text/json");
+    	ctx.header("Access-Control-Allow-Origin", "*");
     	ctx.result("{\"rooms\":" + json + "}");
     	ctx.status(200);
     }
@@ -263,6 +267,19 @@ public class Controller {
         	throw new Exceptions.NoSuchRoomException();
         
         return Main.getInstance().getRoomHandler().get(name);
+    }
+    
+    public static void webserver(Context ctx) throws Exception {
+    	ctx.header("Content-Type", "text/html");
+    	File file = new File("src" + File.separator + "main" + File.separator + "resources" + File.separator + "public" + File.separator + "index.html");
+    	Scanner sc = new Scanner(file);
+    	String str = "";
+    	while (sc.hasNextLine()) {
+    		str += sc.nextLine() + System.lineSeparator();
+    	}
+    	sc.close();
+    	ctx.result(str);
+    	ctx.status(200);
     }
 
 }

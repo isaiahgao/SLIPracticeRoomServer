@@ -20,6 +20,7 @@ import com.amihaiemil.eoyaml.YamlMapping;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.javalin.Javalin;
+import io.javalin.staticfiles.Location;
 import jhunions.isaiahgao.common.Exceptions;
 import jhunions.isaiahgao.server.model.Authenticator;
 import jhunions.isaiahgao.server.model.RoomHandler;
@@ -133,6 +134,7 @@ public class Main {
                 	put(Controller::getUser);
             	});
             });
+            get(Controller::webserver);
         })
 
         .exception(Exceptions.NoSuchRoomException.class, (e, ctx) -> ctx.status(404))
@@ -141,8 +143,8 @@ public class Main {
 //        .exception(JsonProcessingException.class, (e, ctx) -> ctx.status(400))
 //        .exception(MalformedJsonException.class, (e, ctx) -> ctx.status(400))
 
-//        .enableStaticFiles("/public")
-//        .enableStaticFiles(System.getProperty("user.dir") + "/src/main/resources/public", Location.EXTERNAL)
+        .enableStaticFiles("/public")
+        .enableStaticFiles(System.getProperty("user.dir") + "/src/main/resources/public", Location.EXTERNAL)
 
         .start(port);
         System.out.println("Starting on port " + port);
