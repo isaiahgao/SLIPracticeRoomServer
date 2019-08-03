@@ -134,7 +134,6 @@ public class Main {
                 	put(Controller::getUser);
             	});
             });
-            get(Controller::webserver);
         })
 
         .exception(Exceptions.NoSuchRoomException.class, (e, ctx) -> ctx.status(404))

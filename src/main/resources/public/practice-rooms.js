@@ -1,5 +1,5 @@
 window.addEventListener("load", async () => {
-    const response = await fetch(`http://localhost:7000/rooms`, { method: "PUT" });
+    const response = await fetch(`/rooms`, { method: "PUT" });
     if (response.status == 404) {
     	window.alert("Error: could not communicate with server.");
     	return;
