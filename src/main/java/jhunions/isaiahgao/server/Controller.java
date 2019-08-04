@@ -42,65 +42,59 @@ public class Controller {
     	}
     	
     	try {
-	    	ctx.header("Content-Type", "text/json");
-    		
-    		User user = getUserFromCtx(ctx);
-	    	if (user == null) {
-	    		ctx.result(new ScanResultPacket(ScanResult.NO_SUCH_USER, null).toString());
-	    		ctx.status(200);
-	    		return;
-	    	}
-	    	
-	    	if (room.isOccupied()) {
-	    		if (room.getOccupant().getHopkinsID().equals(user.getHopkinsID())) {
-	    			// check back in the room
-	    			// TODO
-	    			room.setOccupant(null);
-		    		ctx.result(new ScanResultPacket(ScanResult.CHECKED_IN, room.getId()).toString());
-		    		ctx.status(200);
-	    			return;
-	    		}
-	    		
-	    		ctx.status(400);
-	    		return;
-	    	}
-	    	
-	    	// check out the room
-	    	// TOOD
-	    	room.setOccupant(user);
-    		ctx.result(new ScanResultPacket(ScanResult.CHECKED_OUT, room.getId()).toString());
-    		ctx.status(200);
+    		JsonNode node = Main.getJson().readTree(ctx.body());
+    		String type = node.get("type").asText();
+    		switch (type) {
+    		case "scan":
+    			scan(ctx, room);
+    			break;
+    		case "enable":
+    			enable(ctx, room);
+    			break;
+    		case "disable":
+    			disable(node, ctx, room);
+    			break;
+    		}
     	} catch (Exception e) {
     		ctx.status(404);
     	}
+    }
+    
+    private static void enable(Context ctx, PracticeRoom room) {
+    	room.enable();
+    	ctx.status(204);
+    }
+    
+    private static void disable(JsonNode node, Context ctx, PracticeRoom room) throws Exception {
+    	room.disable(node.has("reason") ? node.get("reason").asText() : null);
+    	ctx.status(204);
+    }
+    
+    private static void scan(Context ctx, PracticeRoom room) throws Exception {
+    	ctx.header("Content-Type", "text/json");
+		
+		User user = getUserFromCtx(ctx);
+    	if (user == null) {
+    		ctx.result(new ScanResultPacket(ScanResult.NO_SUCH_USER, null).toString());
+    		ctx.status(200);
+    		return;
+    	}
     	
-//        JsonNode body;
-//        try {
-//            body = Main.getJson().readTree(ctx.body());
-//        } catch (IOException e) {
-//            throw new MalformedJsonException();
-//        }
-//        
-//        // must have exactly 2 parameters, one row, one column with int type values
-//        System.out.println("body: " + (body == null ? "null" : body.toString()));
-//        if (body == null || body.size() != 2 ||
-//                !hasIntKeyOfName(body, "row") ||
-//                !hasIntKeyOfName(body, "column")) {
-//            throw new MalformedJsonException();
-//        }
-//
-//        // game is already finished
-//        if (!game.isActive()) {
-//            throw new GameplayException();
-//        }
-//
-//        int row = body.get("row").asInt();
-//        int col = body.get("column").asInt();
-//        try {
-//            game.click(row, col);
-//        } catch (CoordinateOutOfBoundsException e) {
-//            throw new GameplayException();
-//        }
+    	if (room.isOccupied()) {
+    		if (room.getOccupant().getHopkinsID().equals(user.getHopkinsID())) {
+    			room.setOccupant(null);
+	    		ctx.result(new ScanResultPacket(ScanResult.CHECKED_IN, room.getId()).toString());
+	    		ctx.status(200);
+    			return;
+    		}
+    		
+    		ctx.status(400);
+    		return;
+    	}
+    	
+    	room.setOccupant(user);
+		ctx.result(new ScanResultPacket(ScanResult.CHECKED_OUT, room.getId()).toString());
+		ctx.status(200);
     }
     
     /**
@@ -146,11 +140,12 @@ public class Controller {
     	
     	String json = "{";
     	for (Map.Entry<String, PracticeRoom> entry : Main.getInstance().getRoomHandler()) {
-    		User occupant = entry.getValue().getOccupant();
+    		PracticeRoom room = entry.getValue();
+    		User occupant = room.getOccupant();
     		json += "\"" + entry.getKey() + "\":{"
-    				+ "\"remaining\":" + entry.getValue().getMinutesUntilAvailable()
+    				+ "\"remaining\":" + (room.isEnabled() ? room.getMinutesUntilAvailable() : 9999)
     				+ (op ? ",\"user\":\"" + (occupant == null ? "\"null\"" : occupant.toString()) + "\"" : "")
-    				+ "},";
+    				+ (room.isEnabled() && room.getDisabledReason() != null ? "" : ",\"reason\":\"" + room.getDisabledReason() + "\"") + "},";
     	}
     	
     	if (json.endsWith(","))
@@ -158,7 +153,6 @@ public class Controller {
     	json += "}";
     	
     	ctx.header("Content-Type", "text/json");
-    	ctx.header("Access-Control-Allow-Origin", "*");
     	ctx.result("{\"rooms\":" + json + "}");
     	ctx.status(200);
     }
@@ -269,17 +263,8 @@ public class Controller {
         return Main.getInstance().getRoomHandler().get(name);
     }
     
-    public static void webserver(Context ctx) throws Exception {
-    	ctx.header("Content-Type", "text/html");
-    	File file = new File("src" + File.separator + "main" + File.separator + "resources" + File.separator + "public" + File.separator + "index.html");
-    	Scanner sc = new Scanner(file);
-    	String str = "";
-    	while (sc.hasNextLine()) {
-    		str += sc.nextLine() + System.lineSeparator();
-    	}
-    	sc.close();
-    	ctx.result(str);
-    	ctx.status(200);
+    public static void disableRoom(Context ctx) throws Exception {
+    	
     }
 
 }
