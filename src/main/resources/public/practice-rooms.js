@@ -18,6 +18,12 @@ window.addEventListener("load", async () => {
 
 const getAvailability = (data) => {
 	const remaining = data['remaining'];
+	if (remaining === 9999) {
+		if (data.hasOwnProperty('reason')) {
+			return "UNAVAILABLE: [" + data['reason'] + "]";
+		}
+		return "UNAVAILABLE";
+	}
 
 	if (remaining === -1) {
 		return "Available";

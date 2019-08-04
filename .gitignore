@@ -4,3 +4,4 @@ admin
 /bin/
 /target/
 client_secret.json
+/credentials/

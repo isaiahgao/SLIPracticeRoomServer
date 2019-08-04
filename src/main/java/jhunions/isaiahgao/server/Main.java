@@ -1,10 +1,9 @@
 package jhunions.isaiahgao.server;
 
-import static io.javalin.apibuilder.ApiBuilder.get;
-import static io.javalin.apibuilder.ApiBuilder.path;
-import static io.javalin.apibuilder.ApiBuilder.put;
-import static io.javalin.apibuilder.ApiBuilder.post;
 import static io.javalin.apibuilder.ApiBuilder.delete;
+import static io.javalin.apibuilder.ApiBuilder.path;
+import static io.javalin.apibuilder.ApiBuilder.post;
+import static io.javalin.apibuilder.ApiBuilder.put;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -34,6 +33,7 @@ public class Main {
 		
 		this.handler = new RoomHandler();
 		this.users = new UserHandler();
+		this.transactionlogger = new TransactionLogger();
 		this.auth = new Authenticator(auth, admin);
 	}
 	
@@ -77,6 +77,7 @@ public class Main {
 	public static YamlMapping config;
 	private RoomHandler handler;
 	private UserHandler users;
+	private TransactionLogger transactionlogger;
 	private Authenticator auth;
 	
 	public RoomHandler getRoomHandler() {
@@ -91,6 +92,10 @@ public class Main {
 		return this.auth;
 	}
 	
+	public TransactionLogger getTransactionLogger() {
+		return this.transactionlogger;
+	}
+	
     private static ObjectMapper json = new ObjectMapper();
     private static Main instance;
     public static Main getInstance() {
@@ -100,7 +105,14 @@ public class Main {
 	public static void main(String[] args) {
 		instance = new Main();
 		int port = System.getenv("PORT") != null ? Integer.parseInt(System.getenv("PORT")) : 7000;
-		
+
+		// init
+        try {
+            IO.refreshService();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
 		// load config
 		try {
 			File file = new File("config.yml");

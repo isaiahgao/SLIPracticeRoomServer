@@ -61,6 +61,7 @@ public class Controller {
     }
     
     private static void enable(Context ctx, PracticeRoom room) {
+		Main.getInstance().getTransactionLogger().logout(room.getId());
     	room.enable();
     	ctx.status(204);
     }
@@ -83,6 +84,7 @@ public class Controller {
     	if (room.isOccupied()) {
     		if (room.getOccupant().getHopkinsID().equals(user.getHopkinsID())) {
     			room.setOccupant(null);
+    			Main.getInstance().getTransactionLogger().logout(room.getId());
 	    		ctx.result(new ScanResultPacket(ScanResult.CHECKED_IN, room.getId()).toString());
 	    		ctx.status(200);
     			return;
@@ -93,6 +95,7 @@ public class Controller {
     	}
     	
     	room.setOccupant(user);
+		Main.getInstance().getTransactionLogger().login(room.getId());
 		ctx.result(new ScanResultPacket(ScanResult.CHECKED_OUT, room.getId()).toString());
 		ctx.status(200);
     }
