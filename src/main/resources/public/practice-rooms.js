@@ -14,6 +14,19 @@ window.addEventListener("load", async () => {
 	});
 
     document.getElementById("p1").innerHTML = text;
+    
+    // set time
+    const now = new Date();
+    var display = "";
+    var pm = false;
+    if (now.getHours() > 12) {
+    	pm = true;
+    	display += now.getHours() - 12;
+    } else {
+    	display += now.getHours() == 0 ? "12" : now.getHours();
+    }
+    display += ":" + now.getMinutes() + " " + (pm ? "PM" : "AM");
+    document.getElementById("time").innerHTML = "<strong>Last Updated:</strong> " + display;
 });
 
 const getAvailability = (data) => {
