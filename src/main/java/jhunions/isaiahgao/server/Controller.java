@@ -83,8 +83,8 @@ public class Controller {
     	
     	if (room.isOccupied()) {
     		if (room.getOccupant().getHopkinsID().equals(user.getHopkinsID())) {
-    			room.setOccupant(null);
     			Main.getInstance().getTransactionLogger().logout(room.getId());
+    			room.setOccupant(null);
 	    		ctx.result(new ScanResultPacket(ScanResult.CHECKED_IN, room.getId()).toString());
 	    		ctx.status(200);
     			return;
