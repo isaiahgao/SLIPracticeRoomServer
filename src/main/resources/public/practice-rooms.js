@@ -1,4 +1,8 @@
 window.addEventListener("load", async () => {
+	refresh();
+});
+
+const refresh = async () => {
     const response = await fetch(`/rooms`, { method: "PUT" });
     if (response.status == 404) {
     	window.alert("Error: could not communicate with server.");
@@ -7,14 +11,12 @@ window.addEventListener("load", async () => {
     
     const roominfotop = await response.json();
     const roominfo = roominfotop['rooms'];
-    var text = "";
     Object.keys(roominfo).forEach(function(key) {
     	const avil = getAvailability(roominfo[key]);
-    	text = text + key + ": " + avil + "<br>";
+    	console.log("status-" + key);
+   	 	document.getElementById("status-" + key).innerHTML = avil;
 	});
 
-    document.getElementById("p1").innerHTML = text;
-    
     // set time
     const now = new Date();
     var display = "";
@@ -25,9 +27,9 @@ window.addEventListener("load", async () => {
     } else {
     	display += now.getHours() == 0 ? "12" : now.getHours();
     }
-    display += ":" + now.getMinutes() + " " + (pm ? "PM" : "AM");
+    display += ":" + ("0" + now.getMinutes()).slice(-2) + " " + (pm ? "PM" : "AM");
     document.getElementById("time").innerHTML = "<strong>Last Updated:</strong> " + display;
-});
+}
 
 const getAvailability = (data) => {
 	const remaining = data['remaining'];

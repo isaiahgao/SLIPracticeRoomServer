@@ -1,6 +1,7 @@
 package jhunions.isaiahgao.server;
 
 import static io.javalin.apibuilder.ApiBuilder.delete;
+import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.path;
 import static io.javalin.apibuilder.ApiBuilder.post;
 import static io.javalin.apibuilder.ApiBuilder.put;
@@ -22,6 +23,7 @@ import io.javalin.Javalin;
 import io.javalin.staticfiles.Location;
 import jhunions.isaiahgao.common.Exceptions;
 import jhunions.isaiahgao.server.model.Authenticator;
+import jhunions.isaiahgao.server.model.CalendarHandler;
 import jhunions.isaiahgao.server.model.RoomHandler;
 import jhunions.isaiahgao.server.model.UserHandler;
 
@@ -34,6 +36,7 @@ public class Main {
 		this.handler = new RoomHandler();
 		this.users = new UserHandler();
 		this.transactionlogger = new TransactionLogger();
+		this.calendar = new CalendarHandler();
 		this.auth = new Authenticator(auth, admin);
 	}
 	
@@ -75,6 +78,7 @@ public class Main {
 	}
 
 	public static YamlMapping config;
+	private CalendarHandler calendar;
 	private RoomHandler handler;
 	private UserHandler users;
 	private TransactionLogger transactionlogger;
@@ -82,6 +86,10 @@ public class Main {
 	
 	public RoomHandler getRoomHandler() {
 		return this.handler;
+	}
+	
+	public CalendarHandler getCalendarHandler() {
+		return this.calendar;
 	}
 	
 	public UserHandler getUserHandler() {
@@ -146,6 +154,10 @@ public class Main {
                 	put(Controller::getUser);
             	});
             });
+            path("calendar", () -> {
+            	get(Controller::getCalendar);
+            	post(Controller::reloadCalendar);
+            });
         })
 
         .exception(Exceptions.NoSuchRoomException.class, (e, ctx) -> ctx.status(404))
@@ -159,6 +171,10 @@ public class Main {
 
         .start(port);
         System.out.println("Starting on port " + port);
+	}
+	
+	public static void reloadCalendar() {
+		
 	}
 	
     /**

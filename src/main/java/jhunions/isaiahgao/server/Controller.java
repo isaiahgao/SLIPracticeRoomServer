@@ -235,6 +235,20 @@ public class Controller {
         }
     }
     
+    public static void getCalendar(Context ctx) throws Exception {
+    	String json = Main.getInstance().getCalendarHandler().getCalendarJson();
+    	ctx.result(json);
+    	ctx.status(200);
+    }
+    
+    public static void reloadCalendar(Context ctx) throws Exception {
+    	if (Main.getInstance().getAuthenticator().getAuthLevel(ctx) < 2) {
+    		throw new Exceptions.AuthenticationFailedException();
+    	}
+    	
+    	Main.reloadCalendar();
+    }
+    
     /**
      * Registers user using data.
      * Body contains user profile data to be added to database.
