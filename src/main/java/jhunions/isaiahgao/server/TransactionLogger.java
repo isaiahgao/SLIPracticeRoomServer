@@ -42,6 +42,9 @@ public class TransactionLogger {
     // fill in Time In and Monitor Initials in database
     private void poll(String room) {
     	UserInstance inst = Main.getInstance().getRoomHandler().get(room).getOccupantInstance();
+    	if (inst == null)
+    		return;
+    	
         Spreadsheets accessor = IO.getService().spreadsheets();
         String range = inst.getSheetName() + "!H" + inst.getLine() + ":I" + inst.getLine();
         
