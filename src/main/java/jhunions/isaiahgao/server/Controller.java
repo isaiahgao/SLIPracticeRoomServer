@@ -138,7 +138,7 @@ public class Controller {
      * @param ctx The context. Showing users requires auth level 2.
      */
     public static void getStatuses(Context ctx) {
-    	System.out.println("received get request");
+//    	System.out.println("received get request");
     	boolean op = Main.getInstance().getAuthenticator().getAuthLevel(ctx) > 1;
     	
     	String json = "{";
