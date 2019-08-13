@@ -28,7 +28,7 @@ public class CalendarHandler {
 	private Map<SimpleDate, String> singles;
 	private List<Recurring> recurrings;
 	private String cache;
-	private int mostRecentSunday;
+	private int lastUpdate;
 	
 	public void invalidateCache() {
 		this.cache = null;
@@ -41,10 +41,10 @@ public class CalendarHandler {
 			// skip to most recent Sunday
 			today.setDate(today.getDate() - 1);
 		}
-		if (today.getDate() == this.mostRecentSunday && this.cache != null) {
+		if (todaysdate == this.lastUpdate && this.cache != null) {
 			return this.cache;
 		}
-		this.mostRecentSunday = today.getDate();
+		this.lastUpdate = todaysdate;
 		
 		this.cache = "{\"entries\":[";
 		for (int i = 0; i < 28; i++) {
