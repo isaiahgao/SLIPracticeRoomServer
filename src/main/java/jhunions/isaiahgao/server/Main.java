@@ -154,7 +154,7 @@ public class Main {
                 	put(Controller::getUser);
             	});
             });
-            path("calendar", () -> {
+            path("getcalendar", () -> {
             	get(Controller::getCalendar);
             	post(Controller::reloadCalendar);
             });

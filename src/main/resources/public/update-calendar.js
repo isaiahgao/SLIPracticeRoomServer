@@ -3,7 +3,7 @@ window.addEventListener("load", async () => {
 });
 
 const refresh = async () => {
-    const response = await fetch(`/calendar`, { method: "GET" });
+    const response = await fetch(`/getcalendar`, { method: "GET" });
     if (response.status == 404) {
     	window.alert("Error: could not communicate with server.");
     	return;
