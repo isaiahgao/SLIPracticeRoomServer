@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
 import com.amihaiemil.eoyaml.YamlSequence;
 
 import jhunions.isaiahgao.common.PracticeRoom;
+import jhunions.isaiahgao.common.User;
+import jhunions.isaiahgao.common.UserInstance;
 import jhunions.isaiahgao.server.Main;
 
 public class RoomHandler implements Iterable<Map.Entry<String, PracticeRoom>> {
@@ -19,6 +21,14 @@ public class RoomHandler implements Iterable<Map.Entry<String, PracticeRoom>> {
 	}
 	
 	private Map<String, PracticeRoom> rooms;
+	
+	public UserInstance getPersonInRoom(User user) {
+		for (PracticeRoom room : this.rooms.values()) {
+			if (room.getOccupantInstance() != null && room.getOccupantInstance().getUser().equals(user))
+				return room.getOccupantInstance();
+		}
+		return null;
+	}
 	
 	public void load() {
 		YamlSequence rooms = Main.config.yamlSequence("practice-rooms");

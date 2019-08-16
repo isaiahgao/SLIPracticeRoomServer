@@ -1,9 +1,7 @@
 package jhunions.isaiahgao.server;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
-import java.util.Scanner;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -15,6 +13,7 @@ import jhunions.isaiahgao.common.PracticeRoom;
 import jhunions.isaiahgao.common.ScanResultPacket;
 import jhunions.isaiahgao.common.ScanResultPacket.ScanResult;
 import jhunions.isaiahgao.common.User;
+import jhunions.isaiahgao.common.UserInstance;
 
 public class Controller {
 	
@@ -37,10 +36,6 @@ public class Controller {
     	}
     	
     	PracticeRoom room = getRoomObject(ctx);
-    	if (room == null) {
-    		throw new Exceptions.NoSuchRoomException();
-    	}
-    	
     	try {
     		JsonNode node = Main.getJson().readTree(ctx.body());
     		String type = node.get("type").asText();
@@ -49,9 +44,15 @@ public class Controller {
     			scan(ctx, room);
     			break;
     		case "enable":
+    	    	if (room == null) {
+    	    		throw new Exceptions.NoSuchRoomException();
+    	    	}
     			enable(ctx, room);
     			break;
     		case "disable":
+    	    	if (room == null) {
+    	    		throw new Exceptions.NoSuchRoomException();
+    	    	}
     			disable(node, ctx, room);
     			break;
     		}
@@ -81,16 +82,13 @@ public class Controller {
     		return;
     	}
     	
-    	if (room.isOccupied()) {
-    		if (room.getOccupant().getHopkinsID().equals(user.getHopkinsID())) {
-    			Main.getInstance().getTransactionLogger().logout(room.getId());
-    			room.setOccupant(null);
-	    		ctx.result(new ScanResultPacket(ScanResult.CHECKED_IN, room.getId()).toString());
-	    		ctx.status(200);
-    			return;
-    		}
-    		
-    		ctx.status(400);
+    	UserInstance inst = Main.getInstance().getRoomHandler().getPersonInRoom(user);
+    	if (inst != null) {
+    		room = Main.getInstance().getRoomHandler().get(inst.getRoom());
+			Main.getInstance().getTransactionLogger().logout(room.getId());
+			room.setOccupant(null);
+    		ctx.result(new ScanResultPacket(ScanResult.CHECKED_IN, room.getId()).toString());
+    		ctx.status(200);
     		return;
     	}
     	

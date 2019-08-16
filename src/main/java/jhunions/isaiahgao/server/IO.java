@@ -24,7 +24,7 @@ public class IO {
     private static final String REAL_LOG_ID = "1MdkPLOyFvOqKnkpwT7ML-vzmog7dBqBLK7i8wH-u-Mg";
 
     public static String getLogURL() {
-        return TEST_LOG_ID;
+        return REAL_LOG_ID;
     }
 	
     private static final String APPLICATION_NAME = "JHUnions Practice Rooms";
