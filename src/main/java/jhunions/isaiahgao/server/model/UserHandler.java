@@ -85,12 +85,25 @@ public class UserHandler {
 	}
 	
 	public boolean unregister(String id) {
-		return this.byHopkinsId.remove(id) != null;
+		boolean bool = this.byHopkinsId.remove(id) != null;
+		if (bool)
+			saveAll();
+		return bool;
 	}
 	
 	public void registerUser(User user) {
+		boolean update = false;
+		if (this.byHopkinsId.containsKey(user.getHopkinsID())) {
+			update = true;
+		}
+		
 		this.byHopkinsId.put(user.getHopkinsID(), user);
-		append(user);
+		
+		if (!update) {
+			append(user);
+		} else {
+			saveAll();
+		}
 	}
 	
 	public void saveAll() {
