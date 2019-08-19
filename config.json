@@ -1,0 +1,15 @@
+{
+  "practice-rooms": [
+    109,110,111,112,114,115,116,117,118,119
+  ],
+  "id-formats": {
+      "undergrad": {
+        "length": 19,
+        "ignore-first": 4
+      },
+      "grad": {
+        "length": 15,
+        "ignore-first": 4
+      }
+  }
+}

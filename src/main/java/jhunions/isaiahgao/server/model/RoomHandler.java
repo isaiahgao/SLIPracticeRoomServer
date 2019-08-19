@@ -7,10 +7,9 @@ import java.util.Map.Entry;
 
 import org.jetbrains.annotations.Nullable;
 
-import com.amihaiemil.eoyaml.YamlSequence;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 
 import jhunions.isaiahgao.common.PracticeRoom;
-import jhunions.isaiahgao.common.User;
 import jhunions.isaiahgao.common.UserInstance;
 import jhunions.isaiahgao.server.Main;
 
@@ -22,18 +21,19 @@ public class RoomHandler implements Iterable<Map.Entry<String, PracticeRoom>> {
 	
 	private Map<String, PracticeRoom> rooms;
 	
-	public UserInstance getPersonInRoom(User user) {
+	public UserInstance getPersonInRoom(String id) {
 		for (PracticeRoom room : this.rooms.values()) {
-			if (room.getOccupantInstance() != null && room.getOccupantInstance().getUser().equals(user))
+			if (room.getOccupantInstance() != null && room.getOccupantInstance().getUser().getHopkinsID().equals(id))
 				return room.getOccupantInstance();
 		}
 		return null;
 	}
 	
 	public void load() {
-		YamlSequence rooms = Main.config.yamlSequence("practice-rooms");
+		ArrayNode rooms = (ArrayNode) Main.config.get("practice-rooms");
 		for (int i = 0; i < rooms.size(); ++i) {
-			this.rooms.put(rooms.string(i), new PracticeRoom(rooms.string(i)));
+			String name = rooms.get(i).asText();
+			this.rooms.put(name, new PracticeRoom(name));
 		}
 	}
 	

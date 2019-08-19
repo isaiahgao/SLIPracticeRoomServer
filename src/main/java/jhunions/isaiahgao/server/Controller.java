@@ -18,6 +18,28 @@ import jhunions.isaiahgao.common.UserInstance;
 public class Controller {
 	
 	/**
+	 * Returns the format for IDs the client uses to scan things.
+	 */
+	public static void returnFormat(Context ctx) throws Exception {
+    	if (Main.getInstance().getAuthenticator().getAuthLevel(ctx) < 1) {
+    		throw new Exceptions.AuthenticationFailedException();
+    	}
+    	
+    	ctx.result("{" + Main.getInstance().getFormatHandler().getFormat() + "}");
+    	ctx.status(200);
+	}
+	
+	public static void reloadFormat(Context ctx) throws Exception {
+    	if (Main.getInstance().getAuthenticator().getAuthLevel(ctx) < 2) {
+    		throw new Exceptions.AuthenticationFailedException();
+    	}
+    	
+		Main.reloadConfig();
+		Main.getInstance().getFormatHandler().load(Main.config);
+		ctx.status(204);
+	}
+	
+	/**
 	 * Attempts to check in/out a room. Requires auth.
 	 * Body contains user card ID.
 	 * Returns 400 if room is occupied, 404 if no user, 204 if successful.
@@ -75,19 +97,31 @@ public class Controller {
     private static void scan(Context ctx, PracticeRoom room) throws Exception {
     	ctx.header("Content-Type", "text/json");
 		
-		User user = getUserFromCtx(ctx);
-    	if (user == null) {
-    		ctx.result(new ScanResultPacket(ScanResult.NO_SUCH_USER, null).toString());
-    		ctx.status(200);
-    		return;
+		String userid = getCardNumberFromCtx(ctx);
+		User user = null;
+    	if (userid == null) {
+    		user = getUserFromCtx(ctx);
+    		if (user == null) {
+    			throw new Exceptions.InvalidSyntaxException();
+    		}
+    		userid = user.getHopkinsID();
     	}
     	
-    	UserInstance inst = Main.getInstance().getRoomHandler().getPersonInRoom(user);
+    	UserInstance inst = Main.getInstance().getRoomHandler().getPersonInRoom(userid);
     	if (inst != null) {
     		room = Main.getInstance().getRoomHandler().get(inst.getRoom());
 			Main.getInstance().getTransactionLogger().logout(room.getId());
 			room.setOccupant(null);
     		ctx.result(new ScanResultPacket(ScanResult.CHECKED_IN, room.getId()).toString());
+    		ctx.status(200);
+    		return;
+    	}
+    	
+    	if (user == null)
+    		user = Main.getInstance().getUserHandler().getById(userid);
+    	
+    	if (user == null) {
+    		ctx.result(new ScanResultPacket(ScanResult.NO_SUCH_USER, null).toString());
     		ctx.status(200);
     		return;
     	}
@@ -192,6 +226,31 @@ public class Controller {
     	ctx.status(200);
     }
     
+    private static String getCardNumberFromCtx(Context ctx) throws Exception {
+    	if (Main.getInstance().getAuthenticator().getAuthLevel(ctx) < 1) {
+    		throw new Exceptions.AuthenticationFailedException();
+    	}
+    	
+    	JsonNode body;
+        try {
+            body = Main.getJson().readTree(ctx.body());
+        } catch (IOException e) {
+        	e.printStackTrace();
+        	throw new Exceptions.NoSuchUserException();
+        }
+        
+        try {
+        	// has card number for some reason
+        	if (body.has("cardnumber")) {
+        		String num = body.get("cardnumber").asText();
+        		return num;
+        	}
+        	return null;
+        } catch (Exception e) {
+        	e.printStackTrace();
+        	throw new Exceptions.NoSuchUserException();
+        }
+    }
     
     /**
      * Gets user associated with a card number or email.
@@ -217,7 +276,7 @@ public class Controller {
         try {
         	// has user as node
         	if (body.has("user"))
-        		return new User(body.get("user").asText());
+        		return new User(body.get("user"));
         
         	// has card number for some reason
         	if (body.has("cardnumber")) {

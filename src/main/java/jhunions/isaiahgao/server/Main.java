@@ -17,6 +17,7 @@ import java.util.Scanner;
 
 import com.amihaiemil.eoyaml.Yaml;
 import com.amihaiemil.eoyaml.YamlMapping;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.javalin.Javalin;
@@ -24,6 +25,7 @@ import io.javalin.staticfiles.Location;
 import jhunions.isaiahgao.common.Exceptions;
 import jhunions.isaiahgao.server.model.Authenticator;
 import jhunions.isaiahgao.server.model.CalendarHandler;
+import jhunions.isaiahgao.server.model.FormatHandler;
 import jhunions.isaiahgao.server.model.RoomHandler;
 import jhunions.isaiahgao.server.model.UserHandler;
 
@@ -38,6 +40,7 @@ public class Main {
 		this.transactionlogger = new TransactionLogger();
 		this.calendar = new CalendarHandler();
 		this.auth = new Authenticator(auth, admin);
+		this.format = new FormatHandler();
 	}
 	
 	private static String checkAuthFile(String filename) {
@@ -77,12 +80,17 @@ public class Main {
 		return auth;
 	}
 
-	public static YamlMapping config;
+	public static JsonNode config;
 	private CalendarHandler calendar;
 	private RoomHandler handler;
 	private UserHandler users;
 	private TransactionLogger transactionlogger;
 	private Authenticator auth;
+	private FormatHandler format;
+	
+	public FormatHandler getFormatHandler() {
+		return this.format;
+	}
 	
 	public RoomHandler getRoomHandler() {
 		return this.handler;
@@ -123,10 +131,10 @@ public class Main {
         
 		// load config
 		try {
-			File file = new File("config.yml");
+			File file = new File("config.json");
 			if (!file.exists())
 				file.createNewFile();
-			config = Yaml.createYamlInput(file).readYamlMapping();
+			config = json.readTree(file);
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.out.println("Failed to load config.");
@@ -134,10 +142,15 @@ public class Main {
 		}
 		instance.handler.load();
 		instance.users.load();
+		instance.format.load(config);
 		
 		//createNewDatabase("users");
         Javalin.create()
         .routes(() -> {
+        	path("format", () -> {
+        		put(Controller::returnFormat);
+        		post(Controller::reloadFormat);
+        	});
             path("rooms", () -> {
                 path(":roomid", () -> {
                     post(Controller::sendCommand);
@@ -171,6 +184,17 @@ public class Main {
 
         .start(port);
         System.out.println("Starting on port " + port);
+	}
+	
+	public static void reloadConfig() {
+		try {
+			File file = new File("config.yml");
+			if (!file.exists())
+				file.createNewFile();
+			config = json.readTree(file);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	public static void reloadCalendar() {
