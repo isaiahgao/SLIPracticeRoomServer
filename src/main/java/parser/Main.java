@@ -14,7 +14,7 @@ import jhunions.isaiahgao.common.User;
 
 public class Main {
 	
-	private static final boolean ANONYMIZE = true;
+	private static final boolean ANONYMIZE = false;
 	private static final long ID_RAND_MAGIC = 534948573l;
 	private static List<String> randFirstNames = new ArrayList<>();
 	private static List<String> randLastNames = new ArrayList<>();
@@ -162,6 +162,7 @@ public class Main {
 				if (!strtimein.isEmpty())
 					timein.setHMS(strtimein, timeout.getH() > 12 ? 12 : 0);
 				else {
+					timein.setHMS((timeout.getH() + 1) + ":" + timeout.getM() + ":" + timeout.getS(), 0);
 					System.out.println("strtimein is empty: " + str);
 				}
 				

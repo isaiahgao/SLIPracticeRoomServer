@@ -13,15 +13,6 @@ import java.util.Set;
 import com.google.common.collect.Lists;
 
 public class Misc {
-	// manager
-	// M8shr#uum1
-	
-	// monitor
-	// Sh33t@ke
-	
-	// server
-	// 4HUn0nz$
-	
 	public static void mai3n(String[] args) {
 		for (int i = 109; i < 120; i++) {
 			if (i == 113)
