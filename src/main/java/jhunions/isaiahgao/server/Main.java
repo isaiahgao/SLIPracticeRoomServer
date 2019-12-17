@@ -8,15 +8,9 @@ import static io.javalin.apibuilder.ApiBuilder.put;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.Random;
 import java.util.Scanner;
 
-import com.amihaiemil.eoyaml.Yaml;
-import com.amihaiemil.eoyaml.YamlMapping;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -122,6 +116,7 @@ public class Main {
 		instance = new Main();
 		int port = System.getenv("PORT") != null ? Integer.parseInt(System.getenv("PORT")) : 7000;
 
+		SQLLogger.init();
 		// init
         try {
             IO.refreshService();
@@ -200,25 +195,6 @@ public class Main {
 	public static void reloadCalendar() {
 		
 	}
-	
-    /**
-     * Connect to a sample database
-     *
-     * @param fileName the database file name
-     */
-    public static void createNewDatabase(String fileName) {
-        String url = "jdbc:sqlite:C:/sqlite/db/" + fileName;
-        try (Connection conn = DriverManager.getConnection(url)) {
-            if (conn != null) {
-                DatabaseMetaData meta = conn.getMetaData();
-                System.out.println("The driver name is " + meta.getDriverName());
-                System.out.println("A new database has been created.");
-            }
- 
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-    }
 
     public static ObjectMapper getJson() {
         return json;

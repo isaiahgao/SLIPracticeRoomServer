@@ -6,3 +6,4 @@ admin
 client_secret.json
 /credentials/
 /oldusers.processed
+/sql/

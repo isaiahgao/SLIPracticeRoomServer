@@ -18,8 +18,10 @@ import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.ValueRange;
 import com.google.common.collect.Lists;
 
+import jhunions.isaiahgao.common.DateTime;
 import jhunions.isaiahgao.common.UserInstance;
 import jhunions.isaiahgao.common.Utils;
+import jhunions.isaiahgao.server.SQLLogger.PreparedStatements;
 
 public class TransactionLogger {
 	
@@ -44,7 +46,7 @@ public class TransactionLogger {
     	UserInstance inst = Main.getInstance().getRoomHandler().get(room).getOccupantInstance();
     	if (inst == null)
     		return;
-    	
+
         Spreadsheets accessor = IO.getService().spreadsheets();
         String range = inst.getSheetName() + "!H" + inst.getLine() + ":I" + inst.getLine();
         
@@ -60,6 +62,9 @@ public class TransactionLogger {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+
+    	SQLLogger.query(PreparedStatements.FINISH_TRANSACTION_DELETE_OPEN, "PR_" + inst.getRoom());
+    	SQLLogger.query(PreparedStatements.FINISH_TRANSACTION_INSERT_HISTORY, inst.getUser().getHopkinsID(), "PR_" + inst.getRoom(), DateTime.fromDate(inst.getTimeIn()).toString());
     }
     
     // handle IO for logging in
@@ -101,6 +106,8 @@ public class TransactionLogger {
 	            .update(IO.getLogURL(), range, body)
 	            .setValueInputOption("RAW")
 	            .execute();
+
+	    	SQLLogger.query(PreparedStatements.BEGIN_TRANSACTION, inst.getUser().getHopkinsID(), "PR_" + room);
     	} catch (Exception e) {
     		e.printStackTrace();
     	}

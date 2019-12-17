@@ -2,6 +2,7 @@ package jhunions.isaiahgao.server.model;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -10,6 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 import jhunions.isaiahgao.common.FullName;
 import jhunions.isaiahgao.common.User;
+import jhunions.isaiahgao.server.SQLLogger;
+import jhunions.isaiahgao.server.SQLLogger.PreparedStatements;
 
 public class UserHandler {
 	
@@ -18,10 +21,10 @@ public class UserHandler {
 	public UserHandler() {
 		this.byHopkinsId = new HashMap<>();
 	}
-	
+
+	@Deprecated
 	public void load() {
 		boolean shouldSaveAll = false;
-		
 		// check for legacy
 		try {
 			File file = new File("oldusers");
@@ -79,33 +82,26 @@ public class UserHandler {
  			this.saveAll();
  		}
 	}
-	
+
+	@Deprecated
 	public @Nullable User getById(String id) {
-		return this.byHopkinsId.get(id);
+		try {
+			return User.fromSQL(SQLLogger.query(PreparedStatements.GET_USER_BY_ID, id));
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 	
 	public boolean unregister(String id) {
-		boolean bool = this.byHopkinsId.remove(id) != null;
-		if (bool)
-			saveAll();
-		return bool;
+		return SQLLogger.query(PreparedStatements.DELETE_USER_BY_ID, id) != null;
 	}
 	
 	public void registerUser(User user) {
-		boolean update = false;
-		if (this.byHopkinsId.containsKey(user.getHopkinsID())) {
-			update = true;
-		}
-		
-		this.byHopkinsId.put(user.getHopkinsID(), user);
-		
-		if (!update) {
-			append(user);
-		} else {
-			saveAll();
-		}
+		SQLLogger.query(PreparedStatements.REGISTER_USER, user.getHopkinsID(), user.getJhed(), user.getName().getLastName(), user.getName().getFirstName(), user.getPhone());
 	}
 	
+	@Deprecated
 	public void saveAll() {
 		try {
 			File file = new File("users");
@@ -118,7 +114,8 @@ public class UserHandler {
 			e.printStackTrace();
 		}
 	}
-	
+
+	@Deprecated
 	public void append(User user) {
 		// save
 		try {
