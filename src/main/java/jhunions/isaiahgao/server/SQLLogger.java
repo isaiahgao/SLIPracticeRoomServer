@@ -47,7 +47,7 @@ public class SQLLogger {
     public static void init() {
     	try {
     		File file = new File("sqlserver");
-    		if (file.exists()) {
+    		if (!file.exists()) {
     			System.err.println("No sqlserver config file.");
     			System.exit(1);
     		}

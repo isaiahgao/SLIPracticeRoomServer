@@ -30,5 +30,6 @@
 	<classpathentry kind="lib" path="C:/Users/Me/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.10.0.pr2/jackson-annotations-2.10.0.pr2.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Me/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.10.0.pr2/jackson-databind-2.10.0.pr2.jar"/>
 	<classpathentry kind="lib" path="C:/Users/Me/.m2/repository/reference/MySQLConnector/mysql-connector-java-6.0.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Me/Documents/Fonts/sli/dev/PracticeRoomLib.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
