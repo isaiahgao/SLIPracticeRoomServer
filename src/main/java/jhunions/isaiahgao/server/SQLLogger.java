@@ -7,6 +7,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 
@@ -80,6 +82,15 @@ public class SQLLogger {
 			}
     		
 			Class.forName("com.mysql.jdbc.Driver");
+			establishConnection();
+			
+			Timer timer = new Timer();
+			timer.schedule(new TimerTask() {
+				@Override
+				public void run() {
+					establishConnection(true);
+				}
+			}, 0l, 2 * HOUR);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -87,8 +98,18 @@ public class SQLLogger {
     
     private static final long HOUR = 1000l * 60l * 60l;
     public static void establishConnection() {
-    	if (System.currentTimeMillis() - lastConnection > HOUR) {
+    	establishConnection(false);
+    }
+    
+    public static void establishConnection(boolean force) {
+    	if (force || System.currentTimeMillis() - lastConnection > 2 * HOUR) {
 			try {
+				if (con != null)
+					try {
+						con.close();
+					} catch (Exception e) {
+						
+					}
 				con = DriverManager.getConnection("jdbc:mysql://" + DB_ADDR + ":3306/jhunions", USER, PASS);
 			} catch (SQLException e) {
 				e.printStackTrace();
