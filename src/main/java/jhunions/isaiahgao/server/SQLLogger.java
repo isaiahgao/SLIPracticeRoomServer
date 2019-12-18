@@ -5,7 +5,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Scanner;
+
+import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 
 public class SQLLogger {
 
@@ -13,6 +16,8 @@ public class SQLLogger {
 	private static String DB_ADDR;
 	private static String USER;
 	private static String PASS;
+	
+	private static long lastConnection = -1;
 	
 	public enum PreparedStatements {
 		BEGIN_TRANSACTION("INSERT INTO Open_transactions VALUES (?, ?, NOW(), true)"),
@@ -75,13 +80,26 @@ public class SQLLogger {
 			}
     		
 			Class.forName("com.mysql.jdbc.Driver");
-			con = DriverManager.getConnection("jdbc:mysql://" + DB_ADDR + ":3306/jhunions", USER, PASS);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
     }
     
+    private static final long HOUR = 1000l * 60l * 60l;
+    public static void establishConnection() {
+    	if (System.currentTimeMillis() - lastConnection > HOUR) {
+			try {
+				con = DriverManager.getConnection("jdbc:mysql://" + DB_ADDR + ":3306/jhunions", USER, PASS);
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+    	}
+    	lastConnection = System.currentTimeMillis();
+    }
+
+	static boolean flag = false;
     public static ResultSet query(PreparedStatements st, Object... args) {
+    	establishConnection();
     	try {
     		System.out.println("Preparing query:");
 	    	String q = st.getQuery();
@@ -103,13 +121,22 @@ public class SQLLogger {
 	    		}
 	    	}
 	    	
-	    	try {
-	    		ResultSet rs = query.executeQuery();
-	    		return rs;
-	    	} catch (Exception e) {
+	    	if (q.contains("INSERT") || q.contains("UPDATE") || q.contains("DELETE")) {
 	    		query.executeUpdate();
 	    		return null;
 	    	}
+	    	
+    		ResultSet rs = query.executeQuery();
+    		return rs;
+    	} catch (CommunicationsException ex) {
+    		if (flag) {
+    			ex.printStackTrace();
+    			return null;
+    		}
+    		flag = true;
+    		lastConnection = -1;
+    		query(st, args);
+    		flag = false;
     	} catch (Exception e) {
     		e.printStackTrace();
     	}
